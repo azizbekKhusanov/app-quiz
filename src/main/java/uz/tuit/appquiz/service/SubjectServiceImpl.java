@@ -27,8 +27,7 @@ public class SubjectServiceImpl implements SubjectService {
         if (all.isEmpty()) {
             throw RestException.restThrow("This list is empty !!! ");
         }
-        return ApiResult.successResponse(all
-                .stream()
+        return ApiResult.successResponse(all.stream()
                 .map(subjectMapper::convertToDTO)
                 .toList());
     }

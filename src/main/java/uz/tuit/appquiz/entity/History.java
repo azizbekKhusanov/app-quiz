@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-public class UserTestHistory {
+public class History {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,7 +24,6 @@ public class UserTestHistory {
     @Column(nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
-
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

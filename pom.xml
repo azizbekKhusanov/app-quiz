@@ -72,6 +72,7 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <finalName>app-quiz</finalName>
                 </configuration>
             </plugin>
         </plugins>

@@ -8,6 +8,7 @@ import uz.tuit.appquiz.entity.Question;
 import uz.tuit.appquiz.entity.Test;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,15 +29,11 @@ public class QuestionMapper {
     }
 
     public Question convertToEntity(CreateQuestionDTO createQuestionDTO, Test test) {
-
         return Question.builder()
                 .text(createQuestionDTO.getQuestion())
                 .score(createQuestionDTO.getScore())
-                .answers(createQuestionDTO.getChoices() != null ?
-                        createQuestionDTO.getChoices().stream()
-                                .map(answerMapper::convertToEntity)
-                                .toList() : new ArrayList<>())
                 .test(test)
+                .answers(new ArrayList<>())
                 .build();
     }
 }
