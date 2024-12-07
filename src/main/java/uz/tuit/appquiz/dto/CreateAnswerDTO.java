@@ -11,6 +11,5 @@ public class CreateAnswerDTO {
 
     private String answer;
     private boolean isCorrect;
-    private Long questionId;
 
 }
