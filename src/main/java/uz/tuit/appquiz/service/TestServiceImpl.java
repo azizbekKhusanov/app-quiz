@@ -3,16 +3,21 @@ package uz.tuit.appquiz.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import uz.tuit.appquiz.dto.CreateTestDTO;
-import uz.tuit.appquiz.dto.TestDTO;
+import uz.tuit.appquiz.dto.*;
+import uz.tuit.appquiz.entity.Answer;
+import uz.tuit.appquiz.entity.History;
+import uz.tuit.appquiz.entity.Question;
 import uz.tuit.appquiz.entity.Test;
 import uz.tuit.appquiz.exceptions.ApiResult;
 import uz.tuit.appquiz.exceptions.RestException;
-import uz.tuit.appquiz.repository.SubjectRepository;
-import uz.tuit.appquiz.repository.TestRepository;
+import uz.tuit.appquiz.repository.*;
+import uz.tuit.appquiz.service.mapper.AnswerMapper;
+import uz.tuit.appquiz.service.mapper.QuestionMapper;
 import uz.tuit.appquiz.service.mapper.TestMapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +25,12 @@ public class TestServiceImpl implements TestService {
 
     private final TestRepository testRepository;
     private final SubjectRepository subjectRepository;
+    private final QuestionRepository questionRepository;
+    private final HistoryRepository historyRepository;
+    private final UserRepository userRepository;
+    private final QuestionMapper questionMapper;
     private final TestMapper testMapper;
+    private final AnswerMapper answerMapper;
 
     @Override
     public ApiResult<List<TestDTO>> getTestList() {
@@ -58,6 +68,71 @@ public class TestServiceImpl implements TestService {
                 .stream()
                 .map(testMapper::convertToDTO)
                 .toList());
+    }
+
+    @Override
+    public ApiResult<TestSessionDTO> startTest(Long testId, Long userId) {
+        Test test = testRepository.findById(testId)
+                .orElseThrow(() -> RestException
+                        .restThrow("Test not found !!! ", HttpStatus.BAD_REQUEST));
+        List<QuestionDTO> questionDTOS = questionRepository.findByTestId(testId).stream()
+                .map(questionMapper::convertToDTO)
+                .toList();
+        History history = History.builder()
+                .test(test)
+                .user(userRepository.findById(userId)
+                        .orElseThrow(() -> RestException.
+                                restThrow("Test not found !!! ")))
+                .createdAt(LocalDateTime.now())
+                .totalScore(0)
+                .build();
+        historyRepository.save(history);
+        return ApiResult.successResponse(
+                TestSessionDTO.builder()
+                        .testId(test.getId())
+                        .questions(questionDTOS)
+                        .build());
+    }
+
+    @Override
+    public ApiResult<ResultDTO> finishTest(Long testId, Long userId, List<AnswerDTO> answers) {
+        History history = historyRepository.findTopByUserIdAndTestIdOrderByCreatedAt(userId, testId)
+                .orElseThrow(() -> RestException.restThrow("History not found !!! "));
+
+        List<Question> questions = questionRepository.findByTestId(testId);
+        List<AnswerDTO> correctAnswers = questions.stream()
+                .flatMap(question -> question.getAnswers().stream())
+                .filter(Answer::isCorrect)
+                .map(answerMapper::convertToDTO)
+                .toList();
+
+        int correctAnswerCount = 0;
+        int totalScore = 0;
+        int allTotalScore = 0;
+        for (int i = 0; i < correctAnswers.size(); i++) {
+            AnswerDTO userAnswerDTO = answers.get(i);
+            AnswerDTO correctAnswerDTO = correctAnswers.get(i);
+
+            if (userAnswerDTO != null && Objects.equals(userAnswerDTO.getText(), correctAnswerDTO.getText())) {
+                correctAnswerCount++;
+                totalScore += questionRepository.findById(userAnswerDTO.getQuestionId())
+                        .orElseThrow(() -> RestException
+                                .restThrow("Question not found !!! ", HttpStatus.BAD_REQUEST))
+                        .getScore();
+            }
+            history.setTotalScore(totalScore);
+            allTotalScore += questionRepository.findById(correctAnswerDTO.getQuestionId())
+                    .orElseThrow(() -> RestException
+                            .restThrow("Question not found !!! ", HttpStatus.BAD_REQUEST))
+                    .getScore();
+        }
+
+        return ApiResult.successResponse(ResultDTO.builder()
+                .correctAnswers(correctAnswerCount)
+                .totalScore(totalScore)
+                .totalQuestions(questionRepository.findByTestId(testId).size())
+                .percentage(totalScore * 100 / allTotalScore)
+                .build());
     }
 
     @Override

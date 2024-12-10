@@ -43,4 +43,9 @@ public class ApiResult<T> {
     public static ApiResult<ErrorData> errorResponse(int status, String msg) {
         return new ApiResult<>(List.of(new ErrorData(status, msg)));
     }
+
+    public static ApiResult<List<ErrorData>> errorResponse(String msg, int status) {
+        ErrorData errorData = new ErrorData(status, msg);
+        return new ApiResult<>(List.of(errorData));
+    }
 }

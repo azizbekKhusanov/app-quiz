@@ -1,0 +1,37 @@
+###
+POST http://localhost:9090/api-auth/register
+Content-Type: application/json
+
+{
+  "username": "Az1zbek",
+  "name": "Azizbek",
+  "surname": "Xusanov",
+  "email": "xusanov1114@gmail.com",
+  "password": "123",
+  "prePassword": "123"
+}
+
+###
+POST http://localhost:9090/verify
+Content-Type: application/json
+
+{
+  "code": "f23b45",
+  "registerDTO": {
+    "username": "Az1zbek",
+    "name": "Azizbek",
+    "surname": "Xusanov",
+    "email": "xusanov1114@gmail.com",
+    "password": "123",
+    "prePassword": "123"
+  }
+}
+
+###
+POST http://localhost:9090/api-auth/login
+Content-Type: application/json
+
+{
+  "username": "Azizbek_077",
+  "password": "Azizbek_077"
+}

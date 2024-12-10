@@ -4,8 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import uz.tuit.appquiz.dto.CreateTestDTO;
-import uz.tuit.appquiz.dto.TestDTO;
+import uz.tuit.appquiz.dto.*;
 import uz.tuit.appquiz.exceptions.ApiResult;
 import uz.tuit.appquiz.service.TestService;
 
@@ -30,6 +29,16 @@ public class TestControllerImpl implements TestController {
     @Override
     public HttpEntity<ApiResult<List<TestDTO>>> getTestBySubjectId(Long id) {
         return ResponseEntity.ok(testService.getTestBySubjectId(id));
+    }
+
+    @Override
+    public HttpEntity<ApiResult<TestSessionDTO>> startTest(Long testId, Long userId) {
+        return ResponseEntity.ok(testService.startTest(testId, userId));
+    }
+
+    @Override
+    public HttpEntity<ApiResult<ResultDTO>> finishTest(Long testId, Long userId, List<AnswerDTO> answers) {
+        return ResponseEntity.ok(testService.finishTest(testId, userId, answers));
     }
 
     @Override
