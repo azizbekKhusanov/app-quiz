@@ -9,6 +9,14 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: xusanov0511@gmail.com
+    password: bgiz tuur majv kdir
+    protocol: smtp
+    smtp.auth: true
+    smtp.starttls.enable: true
 
 server:
   port: 9090

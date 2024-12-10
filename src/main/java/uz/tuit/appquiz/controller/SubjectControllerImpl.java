@@ -3,18 +3,15 @@ package uz.tuit.appquiz.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RestController;
 import uz.tuit.appquiz.dto.CreateSubjectDTO;
 import uz.tuit.appquiz.dto.SubjectDTO;
 import uz.tuit.appquiz.exceptions.ApiResult;
 import uz.tuit.appquiz.service.SubjectService;
-import uz.tuit.appquiz.utils.AppConstants;
 
 import java.util.List;
 
 @RestController
-@CrossOrigin(AppConstants.REACT_URL)
 @RequiredArgsConstructor
 public class SubjectControllerImpl implements SubjectController {
 

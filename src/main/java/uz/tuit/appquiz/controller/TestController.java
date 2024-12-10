@@ -3,10 +3,7 @@ package uz.tuit.appquiz.controller;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.web.bind.annotation.*;
-import uz.tuit.appquiz.dto.CreateQuestionDTO;
-import uz.tuit.appquiz.dto.CreateTestDTO;
-import uz.tuit.appquiz.dto.QuestionDTO;
-import uz.tuit.appquiz.dto.TestDTO;
+import uz.tuit.appquiz.dto.*;
 import uz.tuit.appquiz.exceptions.ApiResult;
 
 import java.util.List;
@@ -26,6 +23,15 @@ public interface TestController {
 
     @GetMapping("/subject/{id}")
     HttpEntity<ApiResult<List<TestDTO>>> getTestBySubjectId(@PathVariable Long id);
+
+    @PostMapping("/{testId}/start")
+    HttpEntity<ApiResult<TestSessionDTO>> startTest(@PathVariable Long testId, @RequestParam Long userId);
+
+
+    @PostMapping("/{testId}/finish")
+    HttpEntity<ApiResult<ResultDTO>> finishTest(@PathVariable Long testId,
+                                                @RequestParam Long userId,
+                                                @RequestBody List<AnswerDTO> answers);
 
     @PostMapping("/add")
     HttpEntity<ApiResult<TestDTO>> createTest(@RequestBody CreateTestDTO createTestDTO);
