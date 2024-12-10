@@ -1,33 +1,55 @@
 package uz.tuit.appquiz.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import uz.tuit.appquiz.exceptions.RestException;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender javaMailSender;
+    private final JavaMailSender mailSender;
+    private final Map<String, LocalDateTime> codeExpiryMap = new HashMap<>();
 
+    public EmailServiceImpl(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
-    @Override
-    public void mailSender(String to, String subject, String content) {
+    public String sendVerificationEmail(String toEmail) {
+        String code = UUID.randomUUID().toString().substring(0, 6);
+
+        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(2);
+        codeExpiryMap.put(code, expiryTime);
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Verification Code");
+        message.setText("Your verification code is: " + code + "\nThis code will expire in 2 minutes.");
+
         try {
-            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-
-            mimeMessageHelper.setTo(to);
-            mimeMessageHelper.setSubject(subject);
-            mimeMessageHelper.setText(content, true);
-
-        } catch (MessagingException e) {
-            throw RestException.restThrow("Failed to send email");
+            mailSender.send(message);
+        } catch (MailException e) {
+            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
         }
 
+        return code;
     }
+
+    public boolean isCodeValid(String code) {
+        if (codeExpiryMap.containsKey(code)) {
+            LocalDateTime expiryTime = codeExpiryMap.get(code);
+            if (LocalDateTime.now().isBefore(expiryTime)) {
+                return true;
+            } else {
+                codeExpiryMap.remove(code);
+            }
+        }
+        return false;
+    }
+
 }

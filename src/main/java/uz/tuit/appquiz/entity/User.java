@@ -2,7 +2,7 @@ package uz.tuit.appquiz.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import uz.tuit.appquiz.role.Role;
+import uz.tuit.appquiz.enums.Role;
 
 @Getter
 @Setter
@@ -26,7 +26,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -35,4 +35,12 @@ public class User {
     @Enumerated(value = EnumType.STRING)
     @Column(nullable = false, name = "role")
     private Role role;
+
+    private boolean accountNonExpired;
+
+    private boolean accountNonLocked;
+
+    private boolean credentialsNonExpired;
+
+    private boolean enabled;
 }

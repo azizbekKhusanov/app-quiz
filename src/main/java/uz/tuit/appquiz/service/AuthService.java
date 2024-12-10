@@ -1,15 +1,16 @@
 package uz.tuit.appquiz.service;
 
 
+import org.springframework.security.core.userdetails.UserDetailsService;
 import uz.tuit.appquiz.dto.LoginDTO;
 import uz.tuit.appquiz.dto.RegisterDTO;
-import uz.tuit.appquiz.dto.UserDTO;
+import uz.tuit.appquiz.dto.TokenDTO;
 import uz.tuit.appquiz.exceptions.ApiResult;
 
-public interface AuthService {
+public interface AuthService extends UserDetailsService {
 
-    ApiResult<UserDTO> login(LoginDTO loginDTO);
-
-    ApiResult<UserDTO> register(RegisterDTO registerDTO);
+    ApiResult<TokenDTO> login(LoginDTO loginDTO);
+    String register(RegisterDTO registerDTO);
+    ApiResult<TokenDTO> verifyAndLogin(String code, RegisterDTO registerDTO);
 
 }
