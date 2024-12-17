@@ -96,7 +96,7 @@ public class TestServiceImpl implements TestService {
 
     @Override
     public ApiResult<ResultDTO> finishTest(Long testId, Long userId, List<AnswerDTO> answers) {
-        History history = historyRepository.findTopByUserIdAndTestIdOrderByCreatedAt(userId, testId)
+        History history = historyRepository.findTopByUserIdAndTestIdOrderByCreatedAtDesc(userId, testId)
                 .orElseThrow(() -> RestException.restThrow("History not found !!! "));
 
         List<Question> questions = questionRepository.findByTestId(testId);
@@ -121,6 +121,7 @@ public class TestServiceImpl implements TestService {
                         .getScore();
             }
             history.setTotalScore(totalScore);
+            historyRepository.save(history);
             allTotalScore += questionRepository.findById(correctAnswerDTO.getQuestionId())
                     .orElseThrow(() -> RestException
                             .restThrow("Question not found !!! ", HttpStatus.BAD_REQUEST))

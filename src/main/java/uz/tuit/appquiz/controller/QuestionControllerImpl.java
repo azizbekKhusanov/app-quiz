@@ -9,6 +9,8 @@ import uz.tuit.appquiz.dto.QuestionDTO;
 import uz.tuit.appquiz.exceptions.ApiResult;
 import uz.tuit.appquiz.service.QuestionService;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class QuestionControllerImpl implements QuestionController {

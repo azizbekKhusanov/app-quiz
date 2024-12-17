@@ -23,4 +23,5 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(AppConstants.REACT_URL)
                 .allowedMethods("GET");
     }
+
 }

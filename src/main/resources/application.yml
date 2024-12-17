@@ -7,7 +7,7 @@ spring:
     username: postgres
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: true
   mail:
     host: smtp.gmail.com
@@ -22,16 +22,3 @@ spring:
             enable: true
 server:
   port: 9090
-
-app:
-  jwt:
-    access:
-      token:
-        key: 7134743777217A25432A462D4A614E645267556B58703272357538782F413F44
-        expiration:
-          time: 600
-    refresh:
-      token:
-        key: dasdas7d9as7d98as7d
-        expiration:
-          time: 86400

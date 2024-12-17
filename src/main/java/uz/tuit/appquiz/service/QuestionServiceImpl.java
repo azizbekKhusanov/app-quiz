@@ -29,24 +29,13 @@ public class QuestionServiceImpl implements QuestionService {
 
 
     @Override
-    @Transactional
     public ApiResult<QuestionDTO> addQuestionToTest(Long testId, CreateQuestionDTO createQuestionDTO) {
         Test test = testRepository.findById(testId)
                 .orElseThrow(() -> new RuntimeException("Test not found !!!"));
 
         Question question = questionMapper.convertToEntity(createQuestionDTO, test);
         questionRepository.save(question);
-//        List<Answer> answers = createQuestionDTO.getChoices().stream()
-//                .map(createAnswerDTO -> {
-//                    Answer answer = Answer.builder()
-//                            .text(createAnswerDTO.getAnswer())
-//                            .isCorrect(createAnswerDTO.isCorrect())
-//                            .question(question)
-//                            .build();
-//                    question.getAnswers().add(answer);
-//                    return answerRepository.save(answer);
-//                })
-//                .toList();
+
         for (CreateAnswerDTO choice : createQuestionDTO.getChoices()) {
             Answer answer = Answer.builder()
                     .text(choice.getAnswer())

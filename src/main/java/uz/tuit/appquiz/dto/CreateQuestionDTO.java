@@ -13,7 +13,6 @@ public class CreateQuestionDTO {
 
     private String question;
     private int score;
-    private Long testId;
     private List<CreateAnswerDTO> choices;
 
 }

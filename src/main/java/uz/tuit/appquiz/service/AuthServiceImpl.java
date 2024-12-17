@@ -1,141 +1,104 @@
 package uz.tuit.appquiz.service;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import uz.tuit.appquiz.dto.ChangePasswordDTO;
 import uz.tuit.appquiz.dto.LoginDTO;
 import uz.tuit.appquiz.dto.RegisterDTO;
-import uz.tuit.appquiz.dto.TokenDTO;
+import uz.tuit.appquiz.dto.UserDTO;
 import uz.tuit.appquiz.entity.User;
 import uz.tuit.appquiz.enums.Role;
 import uz.tuit.appquiz.exceptions.ApiResult;
 import uz.tuit.appquiz.exceptions.RestException;
 import uz.tuit.appquiz.repository.UserRepository;
-import uz.tuit.appquiz.security.CurrentUserDetails;
+import uz.tuit.appquiz.service.mapper.UserMapper;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepository;
-    private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
-    private final PasswordEncoder passwordEncoder;
-
-    private final Map<String, String> verificationCodes = new HashMap<>();
-
-    @Value(value = "${app.jwt.access.token.key}")
-    private String accessTokenKey;
-
-    @Value(value = "${app.jwt.access.token.expiration.time}")
-    private long accessTokenExpirationTime;
-
-    @Value(value = "${app.jwt.refresh.token.key}")
-    private String refreshTokenKey;
-
-    @Value(value = "${app.jwt.refresh.token.expiration.time}")
-    private long refreshTokenExpirationTime;
-
-    public AuthServiceImpl(UserRepository userRepository,
-                           @Lazy AuthenticationManager authenticationManager,
-                           EmailService emailService,
-                           @Lazy PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.authenticationManager = authenticationManager;
-        this.emailService = emailService;
-        this.passwordEncoder = passwordEncoder;
-    }
-
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
+    private final Map<String, String> verificationUsers = new HashMap<>();
+    private User user;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username).orElseThrow(() ->
-                new UsernameNotFoundException(username + " not found !!!"));
-        return new CurrentUserDetails(user);
+    public ApiResult<UserDTO> login(LoginDTO loginDTO) {
+        User user = userRepository.findByUsername(loginDTO.getUsername()).orElseThrow(() ->
+                RestException.restThrow("Username or Password is wrong !!!"));
+        if (!Objects.equals(user.getPassword(), loginDTO.getPassword())) {
+            throw RestException.restThrow("Username or Password is wrong !!!");
+        }
+
+        return ApiResult.successResponse(userMapper.convertToDTO(user));
     }
 
     @Override
-    public ApiResult<TokenDTO> login(LoginDTO loginDTO) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginDTO.getUsername(),
-                        loginDTO.getPassword()));
+    public ApiResult<UserDTO> verifyAndLogin(String code) {
+        if (!verify(code)) {
+            verificationUsers.remove(user.getEmail());
+            user = new User();
+            throw RestException.restThrow("Invalid code !!! ");
+        }
 
-        CurrentUserDetails user = (CurrentUserDetails) authentication.getPrincipal();
-
-
-        String accessToken = Jwts.builder()
-                .signWith(SignatureAlgorithm.HS256, accessTokenKey)
-                .setSubject(user.getId().toString())
-                .setIssuedAt(new Date(System.currentTimeMillis() + 60000))
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpirationTime))
-                .addClaims(new HashMap<>() {{
-                    put("name", user.getName());
-                    put("test", "how are you ?");
-                }})
-                .compact();
-
-        String refreshToken = Jwts.builder()
-                .signWith(SignatureAlgorithm.HS256, refreshTokenKey)
-                .setSubject(user.getId().toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpirationTime))
-                .compact();
-
-        return ApiResult.successResponse(TokenDTO.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build());
+        User saveUser = userRepository.save(user);
+        verificationUsers.remove(user.getEmail());
+        user = new User();
+        return ApiResult.successResponse(userMapper.convertToDTO(saveUser));
     }
 
     @Override
     public String register(RegisterDTO registerDTO) {
-
-        if (userRepository.existsByUsername(registerDTO.getUsername())) {
-            throw RestException.restThrow("This username is available !!!");
-        }
-        String code = emailService.sendVerificationEmail(registerDTO.getEmail());
-        verificationCodes.put(registerDTO.getEmail(), code);
-
         checkUserFields(registerDTO);
+        String code = emailService.sendVerificationEmail(registerDTO.getEmail());
+        user = User.builder()
+                .name(registerDTO.getName())
+                .surname(registerDTO.getSurname())
+                .username(registerDTO.getUsername())
+                .email(registerDTO.getEmail())
+                .password(registerDTO.getPassword())
+                .role(Role.USER)
+                .build();
+        verificationUsers.put(user.getEmail(), code);
+
 
         return "Verification code sent to " + registerDTO.getEmail();
     }
 
     @Override
-    public ApiResult<TokenDTO> verifyAndLogin(String code, RegisterDTO registerDTO) {
-        if (!verificationCodes.containsKey(registerDTO.getEmail()) ||
-                !verificationCodes.get(registerDTO.getEmail()).equals(code)) {
-            throw new IllegalArgumentException("Invalid verification code");
+    public ApiResult<UserDTO> changePassword(ChangePasswordDTO changePasswordDTO) {
+        User user1 = userRepository.findById(changePasswordDTO.getId())
+                .orElseThrow(() -> RestException.restThrow("User not found !!!"));
+        if (!Objects.equals(user1.getPassword(), changePasswordDTO.getCurPassword())) {
+            throw RestException.restThrow("Wrong current password !!! ");
+        }
+        if (!Objects.equals(changePasswordDTO.getPassword(), changePasswordDTO.getPrePassword())) {
+            throw RestException.restThrow("Passwords don't match");
         }
 
-        User user = User.builder()
-                .name(registerDTO.getName())
-                .surname(registerDTO.getSurname())
-                .username(registerDTO.getUsername())
-                .email(registerDTO.getEmail())
-                .password(passwordEncoder.encode(registerDTO.getPassword()))
-                .role(Role.USER)
-                .build();
-        userRepository.save(user);
-        return login(LoginDTO.builder()
-                .username(registerDTO.getUsername())
-                .password(registerDTO.getPassword())
-                .build());
+        user1.setPassword(changePasswordDTO.getPassword());
+
+        return ApiResult.successResponse(userMapper.convertToDTO(userRepository.save(user1)));
+    }
+
+    private boolean verify(String code) {
+        return Objects.equals(verificationUsers.get(user.getEmail()), code);
     }
 
     private void checkUserFields(RegisterDTO registerDTO) {
-        // todo check user fields
+        if (userRepository.existsByUsername(registerDTO.getUsername())) {
+            throw RestException.restThrow("This username is available !!!");
+        }
+        if (userRepository.existsByEmail(registerDTO.getEmail())) {
+            throw RestException.restThrow("This email is available !!!");
+        }
+        if (!Objects.equals(registerDTO.getPassword(), registerDTO.getPrePassword())) {
+            throw RestException.restThrow("Passwords don't match");
+        }
     }
 }

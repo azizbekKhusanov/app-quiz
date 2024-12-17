@@ -12,11 +12,11 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:9090/verify
+POST http://localhost:9090/api-auth/verify
 Content-Type: application/json
 
 {
-  "code": "f23b45",
+  "code": "ebd41d ",
   "registerDTO": {
     "username": "Az1zbek",
     "name": "Azizbek",
@@ -32,6 +32,6 @@ POST http://localhost:9090/api-auth/login
 Content-Type: application/json
 
 {
-  "username": "Azizbek_077",
-  "password": "Azizbek_077"
+  "username": "Admin",
+  "password": "app_quiz"
 }

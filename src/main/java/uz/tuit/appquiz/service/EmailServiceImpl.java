@@ -39,17 +39,4 @@ public class EmailServiceImpl implements EmailService {
 
         return code;
     }
-
-    public boolean isCodeValid(String code) {
-        if (codeExpiryMap.containsKey(code)) {
-            LocalDateTime expiryTime = codeExpiryMap.get(code);
-            if (LocalDateTime.now().isBefore(expiryTime)) {
-                return true;
-            } else {
-                codeExpiryMap.remove(code);
-            }
-        }
-        return false;
-    }
-
 }

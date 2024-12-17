@@ -32,4 +32,5 @@ public interface AppConstants {
             HistoryController.BASE_PATH + "/**",
             UserController.BASE_PATH + "/**"
     };
+    String[] USER_PAGES = {};
 }
